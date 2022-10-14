@@ -22,12 +22,14 @@ import os
 from functools import lru_cache
 import shlex
 import subprocess
+import re
 
 from fluster.codec import Codec, OutputFormat
 from fluster.decoder import Decoder, register_decoder
 from fluster.utils import file_checksum, run_command
 
-FFMPEG_TPL = '{} -i {} -fps_mode passthrough -vf format=pix_fmts={} -f rawvideo {}'
+#FFMPEG_TPL = '{} -i {} -fps_mode passthrough -vf format=pix_fmts={} -f rawvideo {}'
+FFMPEG_TPL = '{} -i {} {} -vf format=pix_fmts={} -f rawvideo {}'
 
 
 class FFmpegDecoder(Decoder):
@@ -60,8 +62,18 @@ class FFmpegDecoder(Decoder):
     ) -> str:
         '''Decodes input_filepath in output_filepath'''
         # pylint: disable=unused-argument
-        cmd = shlex.split(FFMPEG_TPL.format(
-            self.cmd, input_filepath, str(output_format.value), output_filepath))
+        cmd = shlex.split('ffmpeg -version')
+        output = subprocess.check_output(
+            cmd, stderr=subprocess.DEVNULL).decode('utf-8')
+        print(output)
+        version = re.split(r'\d\.\d.', output)
+        if int(version[0]) > 4:
+            cmd = shlex.split(FFMPEG_TPL.format(
+                self.cmd, input_filepath, '-fps_mode passthrough', str(output_format.value), output_filepath))
+        else:
+            cmd = shlex.split(FFMPEG_TPL.format(
+                self.cmd, input_filepath, '-vsync passthrough', str(output_format.value), output_filepath))
+
         run_command(cmd, timeout=timeout, verbose=verbose)
         return file_checksum(output_filepath)
 
