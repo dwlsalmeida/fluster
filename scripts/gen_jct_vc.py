@@ -192,13 +192,18 @@ class JCTVTGenerator:
             # Example 4:
             # cd84e70999e4577f23eb2077c7a1d24f  EXTPREC_HIGHTHROUGHPUT_444_16_INTRA_8BIT_RExt_Sony_1_rec.yuv
             # 812d62fa8566d51544e760fd9ecbe138  EXTPREC_HIGHTHROUGHPUT_444_16_INTRA_8BIT_RExt_Sony_1.bit
+            # Example 5 (extra 4 bits at the end, possible typo?)
+            # 580e4041563c9cca6c30d0b6c09571aef *Slice_ACT_QP_Offsets_A_Qualcomm_2.bit
+            # 2d4ffc0354dee7216567c89dc1f20391 *Slice_ACT_QP_Offsets_A_Qualcomm_2.rgb
+
             _, fname = os.path.split(test_vector.input_file)
-            regex = rf"([a-fA-F0-9]{{32}})  {fname}"
+            regex = rf"([a-fA-F0-9]{{32,}}) +\*?{fname}"
             regex = re.compile(regex)
             lines = checksum_file.readlines()
-            # If we have a line like example 4 anywhere in the file, prefer that.
+            # If we have a line like examples 4,5 anywhere in the file, prefer
+            # that.
             if any((match := regex.match(line)) for line in lines):
-                test_vector.result = match.group(1).lower()
+                test_vector.result = match.group(1)[:32].lower()
             else:
                 for line in lines:
                     if line.startswith(("#", "\n")):
