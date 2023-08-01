@@ -200,7 +200,7 @@ class JCTVTGenerator:
                 break
             # Assert that we have extracted a valid MD5 from the file
             assert len(test_vector.result) == 32 and re.search(
-                r"[A-F0-9]{32}/i", test_vector.result) != None
+                r"^[a-fA-F0-9]{32}$", test_vector.result) != None, f"{test_vector.result} is not a valid MD5 hash"
 
     def _find_by_ext(self, dest_dir, exts, excludes=None):
         excludes = excludes or []
